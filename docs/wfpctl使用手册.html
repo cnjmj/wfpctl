@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wfpctl 使用手册</title>
+<style>
+/* ========== Reset & Base ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { min-height: 100%; }
+body {
+  position: relative;
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", "Noto Sans SC", sans-serif;
+  color: #1f2d3d;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  background: linear-gradient(160deg, #f8fafc 0%, #ffffff 45%, #cfe0f5 100%);
+  min-height: 100vh;
+}
+/* 全局光斑 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 35% at 18% 8%, rgba(255,255,255,0.55) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 88% 90%, rgba(255,255,255,0.45) 0%, transparent 55%);
+}
+body > * { position: relative; z-index: 1; }
+
+/* ========== 封面 Hero ========== */
+.title {
+  position: relative;
+  overflow: hidden;
+  padding: 56px 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 50%, #4f8ef7 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+.title::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 82%, rgba(255,255,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 82% 18%, rgba(255,255,255,0.08) 0%, transparent 55%);
+  pointer-events: none;
+}
+.title > * { position: relative; z-index: 1; }
+.title h1 { font-size: 28px; font-weight: 800; margin: 0 0 14px 0; letter-spacing: 1px; color: #ffffff; }
+.title .accent-line {
+  width: 48px; height: 3px; background: rgba(255,255,255,0.85);
+  margin: 0 auto 18px; border-radius: 2px;
+}
+.title p { font-size: 15px; color: rgba(255,255,255,0.85); margin: 0; line-height: 1.7; }
+.title .version-badge {
+  display: inline-block; margin-top: 14px; padding: 4px 14px;
+  background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 20px; font-size: 12px; letter-spacing: 1px;
+}
+
+/* ========== 章节标题 ========== */
+h1.heading {
+  font-size: 28px;
+  color: #0f1e33;
+  margin: 36px 0 16px 0;
+  font-weight: 700;
+  border-left: 4px solid #3b82f6;
+  padding-left: 16px;
+}
+h2.heading {
+  font-size: 22px;
+  color: #0f1e33;
+  margin: 28px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #c9d6f3;
+  font-weight: 600;
+}
+h3.heading {
+  font-size: 18px;
+  color: #2563eb;
+  margin: 22px 0 10px;
+  font-weight: 600;
+}
+
+/* ========== 正文 / 列表 ========== */
+.paragraph { font-size: 15px; color: #1f2d3d; line-height: 1.8; margin: 0 0 16px 0; }
+.list { margin: 0 0 16px 0; padding-left: 24px; font-size: 15px; color: #1f2d3d; line-height: 1.8; }
+.list li { margin-bottom: 8px; }
+.list li::marker { color: #3b82f6; }
+
+/* ========== callout ========== */
+.callout {
+  margin: 0 0 16px 0;
+  padding: 16px 24px;
+  background: #e8f0fe;
+  border-left: 4px solid #3b82f6;
+  border-radius: 8px;
+}
+.callout[data-variant="warning"] { background: #FFF3E0; border-left-color: #d97706; }
+.callout[data-variant="tip"] { background: #E8F5E9; border-left-color: #16a34a; }
+.callout p { font-size: 15px; color: #1f2d3d; margin: 0; line-height: 1.8; }
+.callout p + p { margin-top: 8px; }
+
+/* ========== 卡片 ========== */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 24px;
+  margin: 0 0 16px 0;
+}
+.card h3 { font-size: 17px; color: #0f1e33; margin: 0 0 10px 0; font-weight: 700; }
+.card h3 .num {
+  display: inline-block; width: 24px; height: 24px; line-height: 24px;
+  background: #3b82f6; color: #fff; border-radius: 50%;
+  font-size: 13px; text-align: center; margin-right: 8px;
+}
+.card p { font-size: 14px; color: #5b6b80; margin: 0; line-height: 1.8; }
+
+/* ========== 表格 ========== */
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+table.table th {
+  background: linear-gradient(135deg, #c9d6f3, #e8f0fe);
+  color: #0a1626;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 2px solid #3b82f6;
+}
+table.table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #dbe4ef;
+  color: #1f2d3d;
+  line-height: 1.7;
+  vertical-align: top;
+}
+table.table tr:last-child td { border-bottom: none; }
+table.table tr:nth-child(even) td { background: #f4f7fb; }
+table.table code, .paragraph code, .callout code, .faq-item code {
+  font-family: 'Cascadia Code', Consolas, monospace;
+  background: #eef5ff; color: #2563eb;
+  padding: 1px 6px; border-radius: 4px; font-size: 13px;
+}
+
+/* ========== 深挖折叠 ========== */
+details.deep-dive {
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  margin: 0 0 16px 0;
+  padding: 4px 0;
+  border-left: 3px solid #3b82f6;
+}
+details.deep-dive summary {
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f1e33;
+  cursor: pointer;
+}
+details.deep-dive .content { padding: 0 20px 16px; }
+
+/* ========== 步骤条 ========== */
+.timeline { list-style: none; padding: 0; margin: 0 0 16px 0; }
+.timeline li {
+  position: relative;
+  padding-left: 28px;
+  padding-bottom: 18px;
+  border-left: 2px solid #e8f0fe;
+  margin-left: 6px;
+}
+.timeline li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.timeline li::before {
+  content: '';
+  position: absolute;
+  left: -7px; top: 5px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid #f4f7fb;
+  box-shadow: 0 0 0 2px #e8f0fe;
+}
+.timeline strong { font-size: 14px; color: #2563eb; }
+.timeline p { font-size: 15px; color: #1f2d3d; margin: 4px 0 0 0; line-height: 1.8; }
+
+/* ========== code ========== */
+.code {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 16px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+  font-family: 'Cascadia Code', 'Fira Code', 'SF Mono', 'Source Code Pro', Consolas, monospace;
+}
+.code .cm { color: #94a3b8; }       /* 注释 */
+.code .hl { color: #93c5fd; }       /* 高亮命令 */
+
+/* ========== FAQ ========== */
+.faq-item {
+  margin: 0 0 12px 0;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  border-left: 3px solid #e8f0fe;
+}
+.faq-item .q { font-size: 15px; font-weight: bold; color: #0f1e33; margin: 0 0 6px 0; }
+.faq-item .a { font-size: 14px; color: #1f2d3d; margin: 0; padding-left: 16px; line-height: 1.8; }
+
+/* ========== 尾页 ========== */
+.end_page {
+  margin-top: 24px;
+  padding: 56px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, #c9d6f3 0%, #e8f0fe 100%);
+  border-radius: 16px;
+}
+.end_page h1 { font-size: 28px; color: #0f1e33; margin: 0 0 16px 0; font-weight: 800; }
+.end_page p  { font-size: 15px; color: #5b6b80; margin: 0; line-height: 1.8; }
+
+/* ========== 响应式 ========== */
+@media screen and (max-width: 600px) {
+  body { padding: 16px !important; }
+  h1 { font-size: 22px !important; }
+  h2 { font-size: 18px !important; }
+  h3 { font-size: 16px !important; }
+}
+
+/* ========== 打印优化 ========== */
+@media print {
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #f4f7fb;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body::before { display: none; }
+  .title, .end_page { border-radius: 0; box-shadow: none; }
+  .faq-item, details.deep-dive, .card { box-shadow: none; border: 1px solid #dbe4ef; }
+  section { break-inside: auto !important; }
+}
+</style>
+</head>
+<body class="mode-explainer" data-palette="ink-blue">
+
+  <!-- ===== 封面 ===== -->
+  <section class="title">
+    <h1>wfpctl 使用手册</h1>
+    <div class="accent-line"></div>
+    <p>Windows 过滤平台（WFP）过滤规则管理命令行工具<br>添加 · 查询 · 修改 · 删除 —— 三语言实现，规则互通</p>
+    <div class="version-badge">v1.8 &nbsp;·&nbsp; 2026-09</div>
+  </section>
+
+  <!-- ===== 前置提示 ===== -->
+  <aside class="callout" data-variant="warning">
+    <p><strong>开始之前</strong>：所有增删改操作（add / del / update / sublayer-*）需要<strong>以管理员身份运行</strong>命令行（依赖系统 BFE 服务），否则会报"打开 BFE 引擎被拒绝"。查询类命令（list / show / layers / sublayers）无需管理员权限。</p>
+    <p>本手册以 <code>wfpctl</code>（C# 版）演示命令。三个版本命令与参数完全一致，仅程序名不同：<code>wfpctl</code>（C#）/ <code>wfpctl_c</code>（C）/ <code>python wfpctl.py</code>（Python）。</p>
+  </aside>
+
+  <!-- ===== 一、工具简介 ===== -->
+  <h1 class="heading">一、工具简介</h1>
+  <p class="paragraph">wfpctl 是一个管理本机 Windows 过滤平台（WFP）过滤规则的命令行工具。WFP 是 Windows 内核级的网络过滤框架，系统防火墙即基于它实现。本工具通过官方 BFE 接口直接操作过滤规则，可实现按<strong>端口、IP 地址/网段、协议、应用程序</strong>的精细联网控制，规则重启系统后仍然生效。</p>
+  <p class="paragraph">工具的所有规则都挂在一个<strong>专属子层</strong>（wfpctl rules）下，与系统自带规则完全隔离——删除、修改操作绝不会影响 Windows 自身的防火墙规则。三个语言版本共用同一个子层，规则互相可见、互相可管理。</p>
+
+  <h2 class="heading">1.1 三个版本怎么选</h2>
+  <table class="table" data-caption="三个版本对照">
+    <thead>
+      <tr><th style="width:14%">版本</th><th style="width:22%">运行条件</th><th style="width:38%">特点</th><th style="width:26%">适用场景</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>wfpctl.exe</strong></td><td>无（.NET Framework 4 为 Windows 自带）</td><td>单文件 51KB，开箱即用，双击环境零依赖</td><td>日常使用首选</td></tr>
+      <tr><td><strong>wfpctl_c.exe</strong></td><td>无（纯原生程序）</td><td>单文件零依赖，不依赖任何运行库；源码 C 标准自包含</td><td>精简系统 / 无 .NET 环境</td></tr>
+      <tr><td><strong>wfpctl.py</strong></td><td>Python 3（标准库 ctypes）</td><td>源码即文档，可阅读可改造，改完即生效无需编译</td><td>二次开发 / 学习 WFP 原理</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="heading">1.2 部署</h2>
+  <ol class="timeline">
+    <li><strong>获取程序</strong><p>将 <code>wfpctl.exe</code>（或 <code>wfpctl_c.exe</code>）复制到任意目录，例如 <code>C:\Tools\wfpctl</code>，即可直接使用，无需安装。</p></li>
+    <li><strong>以管理员身份打开命令行</strong><p>开始菜单搜索 cmd 或 PowerShell，右键选择"以管理员身份运行"。</p></li>
+    <li><strong>验证</strong><p>执行 <code>wfpctl list</code>，能看到规则列表（或"本工具创建 0 条"）即部署成功。</p></li>
+  </ol>
+
+  <!-- ===== 二、核心概念 ===== -->
+  <h1 class="heading">二、五个核心概念</h1>
+  <p class="paragraph">理解以下五个概念即可顺畅使用本工具，每个都只用一句话。</p>
+
+  <div data-cols="2" style="display:flex;gap:16px;flex-wrap:wrap;margin:0 0 16px 0;">
+    <div class="card" style="flex:1;min-width:320px;">
+      <h3><span class="num">1</span>层（Layer）——规则挂在哪</h3>
+      <p>决定规则在网络处理的哪个阶段生效。最常用的是"连接授权层"（connect/accept）：按每条连接判断一次，效率高且不会误伤已建立连接。</p>
+    </div>
+    <div class="card" style="flex:1;min-width:320px;">
+      <h3><span class="num">2</span>子层（Sublayer）——规则的分组</h3>
+      <p>本工具的规则默认放在专属子层"wfpctl rules"下，与系统规则隔离。也可以创建自定义子层做更细的分组管理。</p>
+    </div>
+    <div class="card" style="flex:1;min-width:320px;">
+      <h3><span class="num">3</span>动作（Action）——匹配后做什么</h3>
+      <p>block（阻断）或 permit（放行）。<strong>本工具默认 permit</strong>——即使忘了写动作，也只会"放行"而不会"断网"，安全第一。</p>
+    </div>
+    <div class="card" style="flex:1;min-width:320px;">
+      <h3><span class="num">4</span>权重（Weight）——谁先说了算</h3>
+      <p>同一子层内，权重高（0–15）的规则先评估，遇到第一条 block/permit 即定案。白名单场景的关键参数。</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3><span class="num">5</span>持久化——规则活多久</h3>
+    <p>默认<strong>持久</strong>（重启系统后仍生效）；<code>--volatile</code> 改为临时（BFE 重启即消失）；<code>--boottime</code> 创建为启动时间规则（系统开机、BFE 服务尚未启动时即生效，适合防护类规则）。</p>
+  </div>
+
+  <h2 class="heading">2.1 层别名速查</h2>
+  <table class="table" data-caption="八个常用层别名">
+    <thead>
+      <tr><th style="width:18%">别名</th><th style="width:34%">含义</th><th style="width:48%">建议用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>connect-v4</code></td><td>出站连接授权（IPv4）</td><td rowspan="4">绝大多数场景用这四个：出站控制用 connect，入站控制用 accept。每个连接只判断一次，推荐。</td></tr>
+      <tr><td><code>connect-v6</code></td><td>出站连接授权（IPv6）</td></tr>
+      <tr><td><code>accept-v4</code></td><td>入站连接授权（IPv4）</td></tr>
+      <tr><td><code>accept-v6</code></td><td>入站连接授权（IPv6）</td></tr>
+      <tr><td><code>out-v4</code> / <code>out-v6</code></td><td>出站传输层（每包）</td><td rowspan="2">逐数据包过滤，粒度最细但开销大；需要切断已建立连接时才用。</td></tr>
+      <tr><td><code>in-v4</code> / <code>in-v6</code></td><td>入站传输层（每包）</td></tr>
+    </tbody>
+  </table>
+  <p class="paragraph">完整层列表（本机 97 个）用 <code>wfpctl layers</code> 查看。add 的 <code>--layer</code> 参数也可以直接填层 GUID。</p>
+
+  <!-- ===== 三、快速上手 ===== -->
+  <h1 class="heading">三、快速上手：三分钟加一条规则</h1>
+  <p class="paragraph">以"封锁本机对外的 80 端口 TCP 出站连接"为例：</p>
+  <ol class="timeline">
+    <li><strong>添加规则</strong><p>阻断必须显式写 <code>--action block</code>（默认是放行）。</p></li>
+    <li><strong>查看结果</strong><p><code>wfpctl list</code> 列出工具创建的规则，记下规则 ID。</p></li>
+    <li><strong>验证与删除</strong><p><code>wfpctl show &lt;ID&gt;</code> 看详情确认无误；不需要时 <code>wfpctl del &lt;ID&gt;</code> 删除。</p></li>
+  </ol>
+  <pre class="code" data-lang="bash"><code><span class="cm">:: 1. 添加（阻断出站 80 端口 TCP）</span>
+<span class="hl">wfpctl</span> add --name "禁出站80端口" --action block --protocol tcp --rport 80
+
+<span class="cm">:: 2. 查看工具创建的规则</span>
+<span class="hl">wfpctl</span> list
+
+<span class="cm">:: 3. 查看详情 / 删除</span>
+<span class="hl">wfpctl</span> show 68165
+<span class="hl">wfpctl</span> del 68165</code></pre>
+  <aside class="callout" data-variant="tip">
+    <p>测试建议：拿不准效果时，先用 <code>--volatile</code> 参数添加临时规则（不持久化），确认无误后再正式添加；IP 类规则用 TEST-NET 保留地址（如 203.0.113.x）先演练。</p>
+  </aside>
+
+  <!-- ===== 四、命令详解 ===== -->
+  <h1 class="heading">四、命令详解</h1>
+
+  <h2 class="heading">4.1 命令总览</h2>
+  <table class="table" data-caption="全部命令一览">
+    <thead>
+      <tr><th style="width:20%">命令</th><th style="width:52%">功能</th><th style="width:14%">管理员权限</th><th style="width:14%">别名</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>add</code></td><td>添加过滤规则</td><td>需要</td><td>—</td></tr>
+      <tr><td><code>del</code></td><td>删除规则（按 ID 或按名称）</td><td>需要</td><td>delete</td></tr>
+      <tr><td><code>update</code></td><td>修改规则（未指定的参数保持原值）</td><td>需要</td><td>upd</td></tr>
+      <tr><td><code>list</code></td><td>列出规则（支持 5 种筛选参数）</td><td>不需要</td><td>ls</td></tr>
+      <tr><td><code>show</code></td><td>查看单条规则详情</td><td>不需要</td><td>—</td></tr>
+      <tr><td><code>layers</code></td><td>列出本机全部 WFP 过滤层（97 个）</td><td>不需要</td><td>—</td></tr>
+      <tr><td><code>sublayers</code></td><td>列出全部子层</td><td>不需要</td><td>—</td></tr>
+      <tr><td><code>sublayer-add</code></td><td>创建（或确认已存在）子层</td><td>需要</td><td>—</td></tr>
+      <tr><td><code>sublayer-del</code></td><td>删除空子层</td><td>需要</td><td>—</td></tr>
+      <tr><td><code>help</code></td><td>显示帮助</td><td>不需要</td><td>--help / -h</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="heading">4.2 add —— 添加规则</h2>
+  <pre class="code" data-lang="bash"><code>wfpctl add [--name 名称] [--desc 描述] [--action block|permit] [--layer 层]
+           [--sublayer GUID] [--protocol 协议] [--lport 端口] [--rport 端口]
+           [--lip 地址] [--rip 地址] [--app 程序路径]
+           [--weight 0-15] [--boottime] [--volatile]</code></pre>
+  <table class="table" data-caption="add 参数详解">
+    <thead>
+      <tr><th style="width:22%">参数</th><th style="width:52%">说明</th><th style="width:26%">示例</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>--name</code></td><td>规则显示名，默认 "wfpctl rule"</td><td><code>--name "禁出站80"</code></td></tr>
+      <tr><td><code>--desc</code></td><td>规则描述，可写用途备注</td><td><code>--desc "运维工单#1024"</code></td></tr>
+      <tr><td><code>--action</code></td><td>匹配后动作；<strong>默认 permit（放行）</strong>，阻断必须显式 block</td><td><code>--action block</code></td></tr>
+      <tr><td><code>--layer</code></td><td>过滤层，别名或 GUID，默认 connect-v4</td><td><code>--layer accept-v4</code></td></tr>
+      <tr><td><code>--sublayer</code></td><td>所属子层 GUID，默认用内置子层（三版共享）</td><td><code>--sublayer {GUID}</code></td></tr>
+      <tr><td><code>--protocol</code></td><td>tcp / udp / icmp / icmpv6 / 数字 0-255 / any</td><td><code>--protocol tcp</code></td></tr>
+      <tr><td><code>--lport</code></td><td>本地端口：单值 <code>80</code>、范围 <code>80-90</code>、多值 <code>80,443</code>（多值拆成多条规则）</td><td><code>--rport 80,443</code></td></tr>
+      <tr><td><code>--rport</code></td><td>远程端口，写法同上</td><td><code>--rport 80-90</code></td></tr>
+      <tr><td><code>--lip</code></td><td>本地地址：单 IP / 前缀 / 掩码 / IPv6</td><td><code>--lip 10.0.0.0/8</code></td></tr>
+      <tr><td><code>--rip</code></td><td>远程地址，写法同上</td><td><code>--rip 2001:db8::1</code></td></tr>
+      <tr><td><code>--app</code></td><td>按应用程序过滤，文件必须存在（自动取应用 ID）</td><td><code>--app C:\app\test.exe</code></td></tr>
+      <tr><td><code>--weight</code></td><td>权重 0-15，同子层内高者优先评估；缺省由系统自动分配</td><td><code>--weight 15</code></td></tr>
+      <tr><td><code>--boottime</code></td><td>创建为启动时间规则（BFE 未启动时即生效）</td><td>—</td></tr>
+      <tr><td><code>--volatile</code></td><td>临时规则，不持久化（默认持久，重启仍生效）</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <aside class="callout">
+    <p><strong>多端口展开</strong>：<code>--rport 80,443</code> 会创建两条规则，名称自动加 <code>#1</code>、<code>#2</code> 后缀（如"禁出站 #1"、"禁出站 #2"）。按名称删除时需带后缀，或用 <code>del &lt;ID&gt;</code> 逐条删。</p>
+  </aside>
+
+  <h2 class="heading">4.3 list —— 列出与筛选规则</h2>
+  <pre class="code" data-lang="bash"><code>wfpctl list [--all] [--name 关键字] [--action block|permit] [--layer 层] [--sublayer GUID|default]</code></pre>
+  <table class="table" data-caption="list 筛选参数（可任意组合）">
+    <thead>
+      <tr><th style="width:18%">参数</th><th style="width:56%">作用</th><th style="width:26%">示例</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>（无参数）</td><td>只显示本工具创建的规则（内置子层）</td><td><code>wfpctl list</code></td></tr>
+      <tr><td><code>--all</code></td><td>显示系统全部规则（约 700+ 条，含 Windows 自带）</td><td><code>wfpctl list --all</code></td></tr>
+      <tr><td><code>--name</code></td><td>按<strong>名称或描述</strong>关键字模糊筛选，不区分大小写</td><td><code>wfpctl list --name 白名单</code></td></tr>
+      <tr><td><code>--action</code></td><td>按动作筛选 block / permit</td><td><code>wfpctl list --action block</code></td></tr>
+      <tr><td><code>--layer</code></td><td>按层筛选</td><td><code>wfpctl list --layer out-v4</code></td></tr>
+      <tr><td><code>--sublayer</code></td><td>按子层筛选，支持 <strong>GUID / 名称关键字 / default</strong> 三种写法；名称模糊匹配、不区分大小写、可命中多个子层（如 <code>--sublayer windivert</code>）；<strong>自定义子层的规则只能用此参数查看</strong></td><td><code>wfpctl list --sublayer openvpn</code></td></tr>
+    </tbody>
+  </table>
+  <pre class="code" data-lang="bash"><code><span class="cm">:: 在系统全部规则里搜含"mssec"的（微软安全相关）</span>
+<span class="hl">wfpctl</span> list --all --name mssec
+
+<span class="cm">:: 组合筛选：默认子层 + permit 动作 + 名称含"白名单"</span>
+<span class="hl">wfpctl</span> list --action permit --name 白名单</code></pre>
+
+  <h2 class="heading">4.4 update —— 修改规则</h2>
+  <p class="paragraph">WFP 没有原地修改接口，update 采用<strong>事务内"删旧 + 建新"</strong>实现：要么整体成功，要么自动回滚，不存在中间状态。<strong>未指定的参数一律保持原值</strong>。</p>
+  <pre class="code" data-lang="bash"><code>wfpctl update &lt;规则ID&gt; [--name ..] [--desc ..] [--action ..] [--protocol ..]
+              [--lip ..] [--rip ..] [--lport ..] [--rport ..] [--app ..]
+              [--weight 0-15|auto] [--layer ..] [--sublayer ..]
+              [--boottime] [--volatile] [--persistent]</code></pre>
+  <table class="table" data-caption="update 特殊语义">
+    <thead>
+      <tr><th style="width:26%">写法</th><th style="width:74%">含义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>update 123 --rport 443</code></td><td>只改远程端口，其余全部保留</td></tr>
+      <tr><td><code>--rip any</code></td><td>清除远程地址条件（any = 清除，适用于 lip/rip/lport/rport/app）</td></tr>
+      <tr><td><code>--weight auto</code></td><td>恢复系统自动权重</td></tr>
+      <tr><td><code>--persistent</code></td><td>把临时规则改回持久规则</td></tr>
+      <tr><td>端口参数限制</td><td>update 每次只编辑一条规则，端口仅接受单值或单范围（<code>80</code> 或 <code>80-90</code>），不接受逗号多值</td></tr>
+    </tbody>
+  </table>
+  <aside class="callout" data-variant="warning">
+    <p><strong>注意</strong>：由于"删旧建新"，修改后<strong>规则 ID 会变化</strong>（工具会打印"ID 旧 → 新"对照）。批量脚本中不要缓存旧 ID 反复 update——每次都要用新 ID。</p>
+  </aside>
+
+  <h2 class="heading">4.5 del / show / 子层管理</h2>
+  <pre class="code" data-lang="bash"><code><span class="cm">:: 删除：按 ID 或按名称（名称为精确匹配）</span>
+<span class="hl">wfpctl</span> del 68165
+<span class="hl">wfpctl</span> del --name "禁出站80端口"
+
+<span class="cm">:: 查看单条规则详情（条件、权重、标志一目了然）</span>
+<span class="hl">wfpctl</span> show 68165
+
+<span class="cm">:: 子层管理：创建 / 删除 / 列出</span>
+<span class="hl">wfpctl</span> sublayer-add {GUID} "分组名称" [权重0-65535]
+<span class="hl">wfpctl</span> sublayer-del {GUID}
+<span class="hl">wfpctl</span> sublayers</code></pre>
+  <ul class="list">
+    <li><code>del --name</code> 是<strong>精确匹配</strong>；多端口展开的规则要用带 <code>#N</code> 后缀的全名，或先用 <code>list --name</code> 找到 ID 再删。</li>
+    <li>子层下还有规则时 <code>sublayer-del</code> 会拒绝删除，需先清空规则。</li>
+    <li><code>sublayer-add</code> 幂等：子层已存在时直接返回成功。</li>
+  </ul>
+
+  <!-- ===== 五、典型场景 ===== -->
+  <h1 class="heading">五、典型场景</h1>
+
+  <h3 class="heading">场景 1：封锁指定端口（最常用）</h3>
+  <pre class="code" data-lang="bash"><code><span class="cm">:: 禁止本机访问外部 80 端口（网页常见端口，谨慎使用）</span>
+<span class="hl">wfpctl</span> add --name "禁出站80" --action block --protocol tcp --rport 80
+
+<span class="cm">:: 一条命令禁多个端口：会拆成 2 条规则（#1、#2）</span>
+<span class="hl">wfpctl</span> add --name "禁常见端口" --action block --protocol tcp --rport 23,445
+
+<span class="cm">:: 禁止外部连入 3389（远程桌面）</span>
+<span class="hl">wfpctl</span> add --name "禁RDP" --action block --layer accept-v4 --protocol tcp --rport 3389</code></pre>
+
+  <h3 class="heading">场景 2：禁止访问某个网站 / 网段</h3>
+  <pre class="code" data-lang="bash"><code><span class="cm">:: 按目标 IP 禁访问（单 IP）</span>
+<span class="hl">wfpctl</span> add --name "禁访问某服务器" --action block --rip 203.0.113.10
+
+<span class="cm">:: 按网段禁访问（24 位前缀 = 一个 C 段）</span>
+<span class="hl">wfpctl</span> add --name "禁访问某网段" --action block --rip 203.0.113.0/24
+
+<span class="cm">:: IPv6 同理</span>
+<span class="hl">wfpctl</span> add --name "禁IPv6目标" --action block --layer connect-v6 --rip 2001:db8::/32</code></pre>
+  <aside class="callout">
+    <p>域名限制说明：WFP 按 IP 匹配，域名需要先解析出 IP 再填。若目标站点使用 CDN（多 IP / 动态 IP），建议改用按应用或按端口的方式控制。</p>
+  </aside>
+
+  <h3 class="heading">场景 3：禁止指定程序联网</h3>
+  <pre class="code" data-lang="bash"><code><span class="cm">:: 让某个程序完全无法出站（文件路径必须存在）</span>
+<span class="hl">wfpctl</span> add --name "禁某程序联网" --action block --app "C:\Program Files\test.exe"
+
+<span class="cm">:: 更精细：只禁该程序的 80 端口</span>
+<span class="hl">wfpctl</span> add --name "禁某程序网页访问" --action block --app "C:\Program Files\test.exe" --protocol tcp --rport 80</code></pre>
+
+  <h3 class="heading">场景 4：白名单放行 + 整体阻断（权重组合）</h3>
+  <p class="paragraph">权重决定同子层内的评估顺序：<strong>高权重先评估</strong>。经典组合：白名单例外用 15，整体封锁用 0——流量先匹配到高权重的 permit 例外即放行，否则落到低权重的 block 被拦。</p>
+  <pre class="code" data-lang="bash"><code><span class="cm">:: 第 1 步：放行例外（权重 15，先评估）</span>
+<span class="hl">wfpctl</span> add --name "允许访问公司站" --rip 203.0.113.10 --weight 15
+
+<span class="cm">:: 第 2 步：整体封锁该网段（权重 0，后评估）</span>
+<span class="hl">wfpctl</span> add --name "封锁整个网段" --action block --rip 203.0.113.0/24 --weight 0</code></pre>
+  <p class="paragraph">结果：访问 203.0.113.10 放行，访问该网段其余 IP 全部阻断。show 命令可查看每条规则的权重与系统计算出的"生效权重"。</p>
+
+  <h3 class="heading">场景 5：定位与修改现有规则</h3>
+  <pre class="code" data-lang="bash"><code><span class="cm">:: 1. 按关键字找到规则，拿到 ID</span>
+<span class="hl">wfpctl</span> list --name 白名单
+
+<span class="cm">:: 2. 就地修改：只改端口，其余不动</span>
+<span class="hl">wfpctl</span> update 68165 --rport 8443
+已修改规则: ID 68165 → 68192  名称 = 站点白名单B
+
+<span class="cm">:: 3. 后续操作记得用新 ID</span>
+<span class="hl">wfpctl</span> show 68192</code></pre>
+
+  <!-- ===== 六、FAQ ===== -->
+  <h1 class="heading">六、常见问题与故障排查</h1>
+
+  <h2 class="heading">6.1 常见问题</h2>
+  <div class="faq-item">
+    <p class="q">Q: 报"打开 BFE 引擎被拒绝"？</p>
+    <p class="a">A: 命令行不是管理员身份。右键 cmd/PowerShell 选"以管理员身份运行"。查询命令（list/show/layers）不受影响。</p>
+  </div>
+  <div class="faq-item">
+    <p class="q">Q: 中文显示乱码？</p>
+    <p class="a">A: C# 与 C 版已自动切换 UTF-8 输出。个别终端仍乱码时，先执行 <code>chcp 65001</code> 再运行工具；PowerShell 5.1 下可加 <code>[Console]::OutputEncoding=[Text.Encoding]::UTF8</code>。</p>
+  </div>
+  <div class="faq-item">
+    <p class="q">Q: 规则重启电脑后还在吗？</p>
+    <p class="a">A: 在。默认创建的就是持久规则。用 <code>--volatile</code> 添加的才是临时的（BFE 重启即消失）。<code>list</code> 的"标志"列：P=持久、B=启动时、I=已索引，"-"表示临时。</p>
+  </div>
+  <div class="faq-item">
+    <p class="q">Q: 三个版本能混着用吗？</p>
+    <p class="a">A: 完全可以。三版共用同一子层，exe 加的规则 py 能改，C 版删的规则 exe 也能看到。唯一注意点：update 后 ID 会变，跨版本操作时以 list 最新结果为准。</p>
+  </div>
+  <div class="faq-item">
+    <p class="q">Q: 会误删 Windows 系统自带的防火墙规则吗？</p>
+    <p class="a">A: 不会。工具的所有规则都挂在专属子层"wfpctl rules"下，默认 list / del / update 也只操作该子层。要操作系统规则必须显式带 <code>--all</code>（list 查看）或使用具体 ID——建议不要。</p>
+  </div>
+  <div class="faq-item">
+    <p class="q">Q: del --name 找不到刚添加的多端口规则？</p>
+    <p class="a">A: 多端口展开的规则名带 <code>#N</code> 后缀（如"禁常见端口 #1"），del --name 是精确匹配。改用 <code>list --name 关键字</code> 找到 ID 后按 ID 删除即可。</p>
+  </div>
+
+  <h2 class="heading">6.2 错误码速查</h2>
+  <table class="table" data-caption="常见 WFP 错误码">
+    <thead>
+      <tr><th style="width:22%">错误码</th><th style="width:36%">含义</th><th style="width:42%">处理办法</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>0x80070005</code></td><td>拒绝访问</td><td>以管理员身份运行命令行</td></tr>
+      <tr><td><code>0x80320003</code></td><td>规则不存在</td><td>ID 已变（update 过）或已删除，用 list 重新查</td></tr>
+      <tr><td><code>0x80320007</code></td><td>子层不存在</td><td>先 sublayer-add 创建子层</td></tr>
+      <tr><td><code>0x80320009</code></td><td>对象已存在</td><td>多为 sublayer-add 幂等场景，工具已自动忽略</td></tr>
+      <tr><td><code>0x8032000A</code></td><td>子层被占用</td><td>子层下还有规则，先删规则再删子层</td></tr>
+      <tr><td><code>0x8032001E</code></td><td>标志组合无效</td><td>boottime 规则不能叠加"持久"标志，工具已自动处理，无需手工指定</td></tr>
+      <tr><td><code>0x80320020</code></td><td>端口范围无效</td><td>范围如 1000-2000 跨字节块，换算后倒序被拒，改用逗号列举（见下方深挖）</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ===== 深挖折叠 ===== -->
+  <h2 class="heading">6.3 深入原理（选读）</h2>
+  <details class="deep-dive">
+    <summary>深挖：为什么端口范围 1000-2000 会被拒绝？</summary>
+    <div class="content">
+      <p class="paragraph" style="text-indent:0;font-size:14px;">WFP 的端口范围条件按<strong>网络字节序的数值区间</strong>匹配。端口 1000 存储为 0xE8 0x03，端口 2000 存储为 0xD0 0x07——转换后区间变成 0xE803 ~ 0xD007，起点大于终点，数值区间不成立，BFE 直接拒绝（0x80320020）。</p>
+      <p class="paragraph" style="text-indent:0;font-size:14px;">规律：范围的两个端口若<strong>高字节相同</strong>（如 80-90、8000-9000），网络序后仍有序，可用；若高字节不同（如 1000-2000），大概率倒序被拒。工具遇到该情况会给出明确提示，此时改用逗号列举：<code>--rport 1000,1001,...,2000</code> 或拆成多个有序小段。</p>
+    </div>
+  </details>
+  <details class="deep-dive">
+    <summary>深挖：WFP 如何评估规则——层、子层与权重的顺序</summary>
+    <div class="content">
+      <p class="paragraph" style="text-indent:0;font-size:14px;">网络数据到达某个过滤层时，WFP 的评估顺序是：<strong>层 → 子层（按子层权重从高到低）→ 子层内规则（按规则权重从高到低）</strong>。每个子层内的多条规则会聚合出一个结论，多个子层的结论再按"阻断优先"等仲裁逻辑合并出最终动作。</p>
+      <p class="paragraph" style="text-indent:0;font-size:14px;">这就是白名单场景的原理：同子层内权重 15 的 permit 例外先被评估到并"定案"，权重 0 的整体 block 后评估——例外流量被放行，其余流量被拦。本工具默认子层权重为 0x0101，三版共享，因此它们的规则总在同一个评估组内按权重排序。</p>
+      <p class="paragraph" style="text-indent:0;font-size:14px;">另外：boottime 规则之所以特殊，是因为它由 tcpip.sys 在开机时直接加载（此时 BFE 服务尚未启动），因此自身就隐含"持久"属性——这也是"BOOTTIME + PERSISTENT 组合会被拒绝"的原因。</p>
+    </div>
+  </details>
+  <details class="deep-dive">
+    <summary>深挖：从源码构建 C 版 / C# 版</summary>
+    <div class="content">
+      <p class="paragraph" style="text-indent:0;font-size:14px;">C 版源码 wfpctl.c 完全自包含（WFP 结构体内嵌声明、运行时动态加载 fwpuclnt.dll），任何 C 编译器都能编译，无需 Windows SDK：</p>
+      <pre class="code" data-lang="bash"><code><span class="cm">:: 本机无编译器时，用 PyPI 的 ziglang 工具链（自动下载 clang + MinGW 头）</span>
+pip install ziglang
+python -m ziglang cc -target x86_64-windows-gnu -O2 -o wfpctl_c.exe wfpctl.c -lws2_32
+
+<span class="cm">:: 有 MSVC 时</span>
+cl /O2 wfpctl.c ws2_32.lib
+
+<span class="cm">:: C# 版（Windows 自带的 .NET Framework 编译器，无需安装）</span>
+%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /out:wfpctl.exe wfpctl.cs</code></pre>
+      <p class="paragraph" style="text-indent:0;font-size:14px;">Python 版无需编译，直接 <code>python wfpctl.py</code> 运行（仅需 Python 3 标准库）。</p>
+    </div>
+  </details>
+
+  <!-- ===== 尾页 ===== -->
+  <section class="title end_page">
+    <h1>安全使用三原则</h1>
+    <p>一、阻断规则务必写 <code>--action block</code>，默认 permit 是安全垫底<br>
+       二、先 <code>list --name</code> 定位，再 update / del，改后记得用新 ID<br>
+       三、拿不准时加 <code>--volatile</code> 演练，确认后重建持久规则</p>
+    <p style="margin-top:14px;">wfpctl v1.8 · 三语言实现 · 规则互通 · 与系统防火墙隔离</p>
+  </section>
+
+</body>
+</html>
